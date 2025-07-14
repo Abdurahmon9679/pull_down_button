@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
@@ -28,6 +30,7 @@ class PullDownMenuRoute<VoidCallback> extends PopupRoute<VoidCallback> {
     required this.menuOffset,
     required this.scrollController,
     required super.settings,
+    this.maxHeight
   });
 
   /// Items to show in the [RoutePullDownMenu] created by this route.
@@ -70,6 +73,8 @@ class PullDownMenuRoute<VoidCallback> extends PopupRoute<VoidCallback> {
 
   @override
   final String barrierLabel;
+
+  final double? maxHeight;
 
   @override
   Animation<double> createAnimation() => CurvedAnimation(
@@ -132,6 +137,7 @@ class PullDownMenuRoute<VoidCallback> extends PopupRoute<VoidCallback> {
         removeRight: true,
         child: CustomSingleChildLayout(
           delegate: _PopupMenuRouteLayout(
+            maxHeight: maxHeight,
             buttonRect: buttonRect,
             padding: mediaQuery.padding,
             avoidBounds: avoidBounds,
@@ -161,13 +167,11 @@ class PullDownMenuRoute<VoidCallback> extends PopupRoute<VoidCallback> {
     final horizontalPosition = _MenuHorizontalPosition.get(size, buttonRect);
 
     return switch (horizontalPosition) {
-      _MenuHorizontalPosition.right when isInBottomHalf =>
-        Alignment.bottomRight,
+      _MenuHorizontalPosition.right when isInBottomHalf => Alignment.bottomRight,
       _MenuHorizontalPosition.right => Alignment.topRight,
       _MenuHorizontalPosition.left when isInBottomHalf => Alignment.bottomLeft,
       _MenuHorizontalPosition.left => Alignment.topLeft,
-      _MenuHorizontalPosition.center when isInBottomHalf =>
-        Alignment.bottomCenter,
+      _MenuHorizontalPosition.center when isInBottomHalf => Alignment.bottomCenter,
       _MenuHorizontalPosition.center => Alignment.topCenter,
     };
   }

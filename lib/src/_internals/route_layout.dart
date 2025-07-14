@@ -4,6 +4,10 @@ part of 'route.dart';
 /// rendered from.
 const double _kMenuScreenPadding = 8;
 
+/// Maximum height for the pull-down menu before it becomes scrollable.
+/// You can adjust this value to your preference.
+const double _kMaxMenuHeight = 300;
+
 /// Positioning and size of the menu on the screen.
 @immutable
 class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
@@ -13,6 +17,7 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
     required this.buttonRect,
     required this.menuPosition,
     required this.menuOffset,
+    this.maxHeight,
   });
 
   final EdgeInsets padding;
@@ -20,6 +25,7 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
   final Rect buttonRect;
   final PullDownMenuPosition menuPosition;
   final double menuOffset;
+  final double? maxHeight;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
@@ -29,14 +35,18 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
 
     final check = buttonRect.center.dy >= constraintsHeight / 2;
 
-    final height = switch (menuPosition) {
+    final availableHeight = switch (menuPosition) {
       PullDownMenuPosition.over when check => buttonRect.bottom - padding.top,
       PullDownMenuPosition.over =>
-        constraintsHeight - buttonRect.top - padding.bottom,
+      constraintsHeight - buttonRect.top - padding.bottom,
       PullDownMenuPosition.automatic when check => buttonRect.top - padding.top,
       PullDownMenuPosition.automatic =>
-        constraintsHeight - buttonRect.bottom - padding.bottom,
+      constraintsHeight - buttonRect.bottom - padding.bottom,
     };
+
+    // Limit the height to the maximum menu height or available height, whichever is smaller
+    final effectiveMaxHeight = maxHeight ?? _kMaxMenuHeight;
+    final height = math.min(availableHeight, effectiveMaxHeight);
 
     return BoxConstraints.loose(
       Size(biggest.width, height),
@@ -53,16 +63,16 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
 
     final x = switch (horizontalPosition) {
       _MenuHorizontalPosition.right =>
-        buttonRect.right - childWidth + menuOffset,
+      buttonRect.right - childWidth + menuOffset,
       _MenuHorizontalPosition.left => buttonRect.left - menuOffset,
       _MenuHorizontalPosition.center =>
-        buttonRect.left + buttonRect.width / 2 - childWidth / 2
+      buttonRect.left + buttonRect.width / 2 - childWidth / 2
     };
 
     final originCenter = buttonRect.center;
     final rect = Offset.zero & size;
     final subScreens =
-        DisplayFeatureSubScreen.subScreensInBounds(rect, avoidBounds);
+    DisplayFeatureSubScreen.subScreensInBounds(rect, avoidBounds);
     final subScreen = _PositionUtils.closestScreen(subScreens, originCenter);
 
     final dx = _PositionUtils.fitX(x, subScreen, childWidth, padding);
@@ -80,9 +90,10 @@ class _PopupMenuRouteLayout extends SingleChildLayoutDelegate {
   @override
   bool shouldRelayout(_PopupMenuRouteLayout oldDelegate) =>
       padding != oldDelegate.padding ||
-      !setEquals(avoidBounds, oldDelegate.avoidBounds) ||
-      buttonRect != oldDelegate.buttonRect ||
-      menuPosition != oldDelegate.menuPosition;
+          !setEquals(avoidBounds, oldDelegate.avoidBounds) ||
+          buttonRect != oldDelegate.buttonRect ||
+          menuPosition != oldDelegate.menuPosition ||
+          maxHeight != oldDelegate.maxHeight;
 }
 
 /// A set of utils to help calculating menu's position on screen.
@@ -105,12 +116,12 @@ abstract class _PositionUtils {
 
   /// Returns the `y` a top left offset point for menu's container.
   static double fitY(
-    Rect buttonRect,
-    Rect screen,
-    double childHeight,
-    EdgeInsets padding,
-    PullDownMenuPosition menuPosition,
-  ) {
+      Rect buttonRect,
+      Rect screen,
+      double childHeight,
+      EdgeInsets padding,
+      PullDownMenuPosition menuPosition,
+      ) {
     var y = buttonRect.top;
     final buttonHeight = buttonRect.height;
 
@@ -122,10 +133,10 @@ abstract class _PositionUtils {
           y -= childHeight - buttonHeight;
         }
       case PullDownMenuPosition.automatic:
-        // Native variant applies additional 5px of padding to menu if
-        // [buttonHeight] is smaller than 44px.
+      // Native variant applies additional 5px of padding to menu if
+      // [buttonHeight] is smaller than 44px.
         final padding =
-            buttonHeight < kMinInteractiveDimensionCupertino ? 5 : 0;
+        buttonHeight < kMinInteractiveDimensionCupertino ? 5 : 0;
 
         isInBottomHalf
             ? y -= childHeight + padding
@@ -137,11 +148,11 @@ abstract class _PositionUtils {
 
   /// Returns the `x` a top left offset point for menu's container.
   static double fitX(
-    double wantedX,
-    Rect screen,
-    double childWidth,
-    EdgeInsets padding,
-  ) {
+      double wantedX,
+      Rect screen,
+      double childWidth,
+      EdgeInsets padding,
+      ) {
     final leftSafeArea = screen.left + _kMenuScreenPadding + padding.left;
     final rightSafeArea = screen.right - _kMenuScreenPadding - padding.right;
 

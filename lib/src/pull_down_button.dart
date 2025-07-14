@@ -508,6 +508,7 @@ Future<void> showPullDownMenu({
   PullDownMenuRouteTheme? routeTheme,
   bool useRootNavigator = false,
   RouteSettings? routeSettings,
+  double? maxHeight,
 }) async {
   if (items.isEmpty) return;
 
@@ -550,11 +551,14 @@ Future<VoidCallback?> _showMenu<VoidCallback>({
   required ScrollController? scrollController,
   required bool useRootNavigator,
   required RouteSettings? routeSettings,
+  double? maxHeight,
 }) {
   final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
 
   return navigator.push<VoidCallback>(
-    PullDownMenuRoute(
+    PullDownMenuRoute
+      (
+      maxHeight: maxHeight,
       buttonRect: buttonRect,
       items: items,
       barrierLabel: _barrierLabel(context),
